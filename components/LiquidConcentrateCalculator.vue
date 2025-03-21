@@ -4,27 +4,56 @@ const recommendedConcentration = ref(1) // tablespoons per gallon
 const desiredStrength = ref(1) // %
 const gallonsRequired = ref(1) // gallons
 
-const desiredConcentration = computed(() => {
-    return recommendedConcentration.value * desiredStrength.value
-})
-const amountSolidToAddInTbs = computed(() => {
-    return desiredConcentration.value * gallonsRequired.value
-})
+// DIAL_READINGS is an ordered list of tuples where the first element is the concentration in oz per gallon and the second element is the English description.
+const DIAL_READINGS: [number, string][] = [
+    [8, "8 oz"],
+    [6, "6 oz"],
+    [16/3, "5 1/3 oz"],
+    [4, "4 oz"],
+    [3, "3 oz"],
+    [5/2, "2.5 oz"],
+    [2, "2 oz"],
+    [3/2, "1.5 oz"],
+    [1, "1 oz"],
+    [2/3, "4 tsp"],
+    [1/2, "1 tbs"],
+    [1/4, "1.5 tsp"],
+    [1/6, "1 tsp"],
+]
+const MAX_CONCENTRATE_CAPACITY = 32 // oz
 
-const dialReading = 4.0 // oz / gal
-const amountWaterToAddInOz = computed(() => {
-    return dialReading / (desiredConcentration.value / amountSolidToAddInTbs.value)
-})
+interface Recipe {
+    dialReadingToUse: string
+    tbsSolidToAdd: string
+    ozWaterToAdd: string
+}
 
-const solidsVolumeToAddInTbs = computed(() => {
-    return amountSolidToAddInTbs.value.toFixed(2)
-})
-const waterVolumeToAddInOz = computed(() => {
-    return amountWaterToAddInOz.value.toFixed(2)
-}) // max 32oz
+function calculateRecipe(): Recipe | undefined {
+    // This must be the result of resulting liquid concentration (tbs / oz) multiplied by the dial setting (oz / gal)
+    const desiredConcentration = recommendedConcentration.value * desiredStrength.value // tbs / gal
 
-const foo = computed(() => {
-    return recommendedConcentration.value * desiredStrength.value * gallonsRequired.value
+    // TODO: This can potentially be a fractional number, which is hard to measure. Maybe ignore desired gallons in such cases and make extra?
+    const amountSolidToAddInTbs = desiredConcentration * gallonsRequired.value // tbs
+
+    // We start with the maximum dial setting and work our way down to find the best dial setting
+    for (const [dialReading, description] of DIAL_READINGS) {
+        const amountWaterToAddInOz = dialReading / (desiredConcentration / amountSolidToAddInTbs) // oz
+
+        // If the concentrate is > 50% solids by volume, it will be too thick to siphon into the sprayer.
+        const isSludge = amountSolidToAddInTbs / amountWaterToAddInOz > 1
+
+        if (amountWaterToAddInOz <= MAX_CONCENTRATE_CAPACITY && !isSludge) {
+            return {
+                dialReadingToUse: description,
+                tbsSolidToAdd: amountSolidToAddInTbs.toFixed(2),
+                ozWaterToAdd: amountWaterToAddInOz.toFixed(2),
+            }
+        }
+    }
+}
+
+const recipe = computed(() => {
+    return calculateRecipe()
 })
 </script>
 
@@ -96,8 +125,11 @@ const foo = computed(() => {
             </div>
         </div>
         <div class="text-center">
-            Add {{ solidsVolumeToAddInTbs }} tablespoons of product to {{ waterVolumeToAddInOz }} oz of water.
-            Set dial to 4 oz / gal.
+            <p v-if="recipe">
+            Add {{ recipe.tbsSolidToAdd }} tablespoons of product to {{ recipe.ozWaterToAdd }} oz of water.
+            Set dial to {{ recipe.dialReadingToUse }}.
+            </p>
+            <p v-else>Your requested volume cannot be made with a single batch. Please try a lower volume or strength.</p>
         </div>
     </div>
 </template>
