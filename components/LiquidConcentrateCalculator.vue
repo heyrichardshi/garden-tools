@@ -58,7 +58,7 @@ const recipe = computed(() => {
 </script>
 
 <template>
-    <div class="h-screen m-0 px-16 bg-slate-300 grid grid-cols-1 gap-4">
+    <div class="h-screen m-0 px-4 md:px-16 bg-slate-300 grid grid-cols-1 gap-4">
         <div class="flex gap-4 place-content-center items-center justify-items-center">
             <div>Recommended tablespoons per gallon:</div>
             <div>
