@@ -58,7 +58,7 @@ const recipe = computed(() => {
 </script>
 
 <template>
-    <div class="h-screen m-0 px-4 md:px-16 bg-slate-300 grid grid-cols-1 gap-4">
+    <div class="h-screen m-0 px-4 md:px-16 bg-slate-100 grid grid-cols-1 gap-4 text-slate-900">
         <div class="flex gap-4 place-content-center items-center justify-items-center">
             <div>Recommended tablespoons per gallon:</div>
             <div>
@@ -126,8 +126,8 @@ const recipe = computed(() => {
         </div>
         <div class="text-center">
             <p v-if="recipe">
-            Add {{ recipe.tbsSolidToAdd }} tablespoons of product to {{ recipe.ozWaterToAdd }} oz of water.
-            Set dial to {{ recipe.dialReadingToUse }}.
+            Add <b>{{ recipe.tbsSolidToAdd }} tablespoons</b> of product to <b>{{ recipe.ozWaterToAdd }} oz</b> of water.
+            Set dial to <b>{{ recipe.dialReadingToUse }}</b>.
             </p>
             <p v-else>Your requested volume cannot be made with a single batch. Please try a lower volume or strength.</p>
         </div>
